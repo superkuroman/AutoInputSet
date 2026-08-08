@@ -1,6 +1,6 @@
 <Solution>
-  <Project Path="GameAutomation.Capture/GameAutomation.Capture.csproj" />
   <Project Path="GameAutomation.Core/GameAutomation.Core.csproj" />
+  <Project Path="GameAutomation.Capture/GameAutomation.Capture.csproj" />
   <Project Path="GameAutomation.Editor/GameAutomation.Editor.csproj" />
   <Project Path="GameAutomation.Runner/GameAutomation.Runner.csproj" />
 </Solution>

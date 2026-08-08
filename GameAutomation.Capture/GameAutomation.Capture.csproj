@@ -8,4 +8,8 @@
     <UseWPF>true</UseWPF>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\GameAutomation.Core\GameAutomation.Core.csproj" />
+  </ItemGroup>
+
 </Project>

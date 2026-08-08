@@ -3,3 +3,7 @@ GameAutomation.Capture/obj
 GameAutomation.Core/obj
 GameAutomation.Editor/obj
 GameAutomation.Runner/obj
+GameAutomation.Capture/bin
+GameAutomation.Core/bin
+GameAutomation.Editor/bin
+GameAutomation.Runner/bin
