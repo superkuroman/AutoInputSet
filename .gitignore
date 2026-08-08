@@ -1,0 +1,5 @@
+﻿.vs
+GameAutomation.Capture/obj
+GameAutomation.Core/obj
+GameAutomation.Editor/obj
+GameAutomation.Runner/obj
