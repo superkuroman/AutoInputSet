@@ -1,4 +1,4 @@
-﻿.vs
+.vs
 GameAutomation.Capture/obj
 GameAutomation.Core/obj
 GameAutomation.Editor/obj
@@ -7,3 +7,4 @@ GameAutomation.Capture/bin
 GameAutomation.Core/bin
 GameAutomation.Editor/bin
 GameAutomation.Runner/bin
+ROM/
