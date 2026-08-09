@@ -2,6 +2,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
@@ -14,12 +15,18 @@ public partial class MainWindow : Window
 {
     private const int VkLeftButton = 0x01;
     private const int VkRightButton = 0x02;
+    private const int VkF8 = 0x77;
+    private const int WmHotkey = 0x0312;
+    private const int QuickCaptureHotkeyId = 0x4741;
 
     private CapturedFrame? _currentFrame;
     private BitmapSource? _currentBitmap;
     private readonly DispatcherTimer _previewTimer;
     private readonly DispatcherTimer _windowPickerTimer;
     private bool _windowPickerWaitingForRelease;
+    private HwndSource? _windowSource;
+    private bool _hotkeyRegistered;
+    private DateTime _statusMessageUntil;
 
     public MainWindow()
     {
@@ -40,11 +47,37 @@ public partial class MainWindow : Window
         _windowPickerTimer.Tick += WindowPickerTimer_Tick;
     }
 
+    protected override void OnSourceInitialized(EventArgs e)
+    {
+        base.OnSourceInitialized(e);
+
+        var handle = new WindowInteropHelper(this).Handle;
+        _windowSource = HwndSource.FromHwnd(handle);
+        _windowSource?.AddHook(WindowMessageHook);
+        _hotkeyRegistered = RegisterHotKey(handle, QuickCaptureHotkeyId, 0, VkF8);
+
+        if (!_hotkeyRegistered)
+            StatusText.Text = "F8 快速存圖註冊失敗，可能已被其他程式使用。";
+    }
+
     protected override void OnClosed(EventArgs e)
     {
         _previewTimer.Stop();
         _windowPickerTimer.Stop();
+
+        var handle = new WindowInteropHelper(this).Handle;
+        if (_hotkeyRegistered) _ = UnregisterHotKey(handle, QuickCaptureHotkeyId);
+        _windowSource?.RemoveHook(WindowMessageHook);
         base.OnClosed(e);
+    }
+
+    private nint WindowMessageHook(nint hwnd, int message, nint wParam, nint lParam, ref bool handled)
+    {
+        if (message != WmHotkey || wParam.ToInt32() != QuickCaptureHotkeyId) return 0;
+
+        handled = true;
+        QuickCapturePng();
+        return 0;
     }
 
     private void RefreshButton_Click(object sender, RoutedEventArgs e) => RefreshWindows();
@@ -140,12 +173,12 @@ public partial class MainWindow : Window
             CaptureSelectedWindow(showError: false);
     }
 
-    private void CaptureSelectedWindow(bool showError)
+    private bool CaptureSelectedWindow(bool showError)
     {
         if (WindowSelector.SelectedItem is not GameWindowInfo window)
         {
             if (showError) StatusText.Text = "請先選擇視窗。";
-            return;
+            return false;
         }
 
         try
@@ -161,11 +194,36 @@ public partial class MainWindow : Window
             ScreenshotImage.Source = bitmap;
             ScreenshotImage.InvalidateVisual();
             SavePngButton.IsEnabled = true;
-            StatusText.Text = $"已更新 {window.Title}：{_currentFrame.Width} × {_currentFrame.Height}　{DateTime.Now:HH:mm:ss}";
+            if (DateTime.Now >= _statusMessageUntil)
+                StatusText.Text = $"已更新 {window.Title}：{_currentFrame.Width} × {_currentFrame.Height}　{DateTime.Now:HH:mm:ss}";
+            return true;
         }
         catch (Exception exception)
         {
             if (showError) StatusText.Text = $"擷取失敗：{exception.Message}";
+            return false;
+        }
+    }
+
+    private void QuickCapturePng()
+    {
+        if (!CaptureSelectedWindow(showError: true) || _currentBitmap is null) return;
+
+        try
+        {
+            var templatesDirectory = GetTemplatesDirectory();
+            var filePath = Path.Combine(
+                templatesDirectory,
+                $"Capture_{DateTime.Now:yyyyMMdd_HHmmss_fff}.png");
+
+            SaveBitmapAsPng(_currentBitmap, filePath);
+            _statusMessageUntil = DateTime.Now.AddSeconds(3);
+            StatusText.Text = $"F8 快速存圖完成：{filePath}";
+        }
+        catch (Exception exception)
+        {
+            _statusMessageUntil = DateTime.Now.AddSeconds(3);
+            StatusText.Text = $"快速存圖失敗：{exception.Message}";
         }
     }
 
@@ -179,8 +237,7 @@ public partial class MainWindow : Window
 
         try
         {
-            var templatesDirectory = Path.Combine(AppContext.BaseDirectory, "Templates");
-            Directory.CreateDirectory(templatesDirectory);
+            var templatesDirectory = GetTemplatesDirectory();
 
             var dialog = new SaveFileDialog
             {
@@ -189,21 +246,34 @@ public partial class MainWindow : Window
                 DefaultExt = ".png",
                 AddExtension = true,
                 InitialDirectory = templatesDirectory,
-                FileName = $"Capture_{DateTime.Now:yyyyMMdd_HHmmss}.png"
+                FileName = $"Capture_{DateTime.Now:yyyyMMdd_HHmmss_fff}.png"
             };
 
             if (dialog.ShowDialog(this) != true) return;
 
-            var encoder = new PngBitmapEncoder();
-            encoder.Frames.Add(BitmapFrame.Create(_currentBitmap));
-            using var stream = File.Create(dialog.FileName);
-            encoder.Save(stream);
+            SaveBitmapAsPng(_currentBitmap, dialog.FileName);
+            _statusMessageUntil = DateTime.Now.AddSeconds(3);
             StatusText.Text = $"PNG 已儲存：{dialog.FileName}";
         }
         catch (Exception exception)
         {
             StatusText.Text = $"儲存失敗：{exception.Message}";
         }
+    }
+
+    private static string GetTemplatesDirectory()
+    {
+        var path = Path.Combine(AppContext.BaseDirectory, "Templates");
+        Directory.CreateDirectory(path);
+        return path;
+    }
+
+    private static void SaveBitmapAsPng(BitmapSource bitmap, string filePath)
+    {
+        var encoder = new PngBitmapEncoder();
+        encoder.Frames.Add(BitmapFrame.Create(bitmap));
+        using var stream = File.Create(filePath);
+        encoder.Save(stream);
     }
 
     private void ScreenshotImage_MouseMove(object sender, MouseEventArgs e)
@@ -242,4 +312,12 @@ public partial class MainWindow : Window
         var pixelY = Math.Clamp((int)(normalizedY * _currentFrame.Height), 0, _currentFrame.Height - 1);
         CoordinateText.Text = $"Pixel: {pixelX}, {pixelY}    Normalized: {normalizedX:F6}, {normalizedY:F6}";
     }
+
+    [DllImport("user32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool RegisterHotKey(nint windowHandle, int id, uint modifiers, uint virtualKey);
+
+    [DllImport("user32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool UnregisterHotKey(nint windowHandle, int id);
 }

@@ -72,6 +72,9 @@ Core 是 Class Library，不能直接啟動。
 5. 保持「自動更新」勾選即可持續更新 Screenshot。
 6. 將滑鼠移到 Screenshot 上，底部會顯示 Pixel 與 Normalized 座標。
 7. 按「儲存 PNG」將目前畫面保存到 `Templates` 或指定位置。
+8. Capture 在背景時也可以按 `F8`，重新擷取並直接保存到 `Templates`。
+
+畫面擷取使用 `ClientToScreen` 取得 Client Area 的螢幕座標，再從桌面 DC 複製 Windows 已合成的像素。這可支援 Chrome 等硬體加速視窗，但目標必須可見、不能最小化或被其他視窗遮住。
 
 Normalized 座標不受圖片在 WPF 中的顯示尺寸或留白影響。例如：
 
@@ -84,7 +87,6 @@ Normalized:  0.756771, 0.761111
 
 - 點擊保存座標
 - 框選 Template
-- 儲存 PNG
 - 將結果寫入 Script
 
 ### GameAutomation.Editor

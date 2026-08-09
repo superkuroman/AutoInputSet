@@ -27,6 +27,8 @@
             <StatusBarItem><TextBlock x:Name="StatusText" Text="請選擇視窗並擷取畫面。" /></StatusBarItem>
             <Separator />
             <StatusBarItem><TextBlock x:Name="CoordinateText" Text="Pixel: —    Normalized: —" /></StatusBarItem>
+            <Separator />
+            <StatusBarItem><TextBlock Text="F8：快速存圖至 Templates" /></StatusBarItem>
         </StatusBar>
     </Grid>
 </Window>
