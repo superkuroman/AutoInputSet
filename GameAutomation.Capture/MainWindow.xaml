@@ -9,8 +9,14 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
         <DockPanel Margin="0,0,0,12">
+            <Button x:Name="SavePngButton" DockPanel.Dock="Right" Width="110" Margin="8,0,0,0"
+                    Content="儲存 PNG" Click="SavePngButton_Click" IsEnabled="False" />
             <Button DockPanel.Dock="Right" Width="110" Margin="8,0,0,0" Content="擷取畫面" Click="CaptureButton_Click" />
             <Button DockPanel.Dock="Right" Width="110" Margin="8,0,0,0" Content="重新整理" Click="RefreshButton_Click" />
+            <Button x:Name="PickWindowButton" DockPanel.Dock="Right" Width="125" Margin="8,0,0,0"
+                    Content="滑鼠選取視窗" Click="PickWindowButton_Click" />
+            <CheckBox x:Name="AutoRefreshCheckBox" DockPanel.Dock="Right" Margin="12,0,4,0"
+                      VerticalAlignment="Center" Content="自動更新" IsChecked="True" />
             <TextBlock VerticalAlignment="Center" Margin="0,0,8,0" Text="遊戲視窗" />
             <ComboBox x:Name="WindowSelector" MinWidth="420" DisplayMemberPath="DisplayName" />
         </DockPanel>

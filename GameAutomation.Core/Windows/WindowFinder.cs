@@ -5,6 +5,8 @@ namespace GameAutomation.Core.Windows;
 
 public static partial class WindowFinder
 {
+    private const uint GaRoot = 2;
+
     public static IReadOnlyList<GameWindowInfo> GetVisibleWindows()
     {
         var windows = new List<GameWindowInfo>();
@@ -19,6 +21,25 @@ public static partial class WindowFinder
         }, 0);
 
         return windows.OrderBy(window => window.Title, StringComparer.CurrentCultureIgnoreCase).ToArray();
+    }
+
+    public static GameWindowInfo? GetWindowUnderCursor()
+    {
+        if (!GetCursorPos(out var point)) return null;
+
+        var handle = WindowFromPoint(point);
+        if (handle == 0) return null;
+
+        handle = GetAncestor(handle, GaRoot);
+        if (handle == 0 || !IsWindowVisible(handle)) return null;
+        if (!GetClientRect(handle, out var rect) || rect.Width <= 0 || rect.Height <= 0) return null;
+
+        var titleLength = GetWindowTextLength(handle);
+        if (titleLength <= 0) return null;
+
+        var title = new StringBuilder(titleLength + 1);
+        _ = GetWindowText(handle, title, title.Capacity);
+        return new GameWindowInfo(handle, title.ToString(), rect.Width, rect.Height);
     }
 
     private delegate bool EnumWindowsProc(nint handle, nint parameter);
@@ -36,6 +57,19 @@ public static partial class WindowFinder
     [LibraryImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static partial bool GetClientRect(nint handle, out NativeRect rect);
+    [LibraryImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool GetCursorPos(out NativePoint point);
+    [LibraryImport("user32.dll")]
+    private static partial nint WindowFromPoint(NativePoint point);
+    [LibraryImport("user32.dll")]
+    private static partial nint GetAncestor(nint handle, uint flags);
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct NativePoint
+    {
+        public int X, Y;
+    }
 
     [StructLayout(LayoutKind.Sequential)]
     private struct NativeRect

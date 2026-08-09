@@ -2,7 +2,7 @@
 
 GameAutomation 是一套以 C#、WPF、.NET 10 和 Windows API 開發的 Windows 遊戲自動化工具。
 
-目前專案仍在早期開發階段，已完成視窗搜尋、Client Area 畫面擷取，以及滑鼠位置的 Pixel／Normalized Coordinate 顯示。滑鼠輸入、腳本執行、圖片比對與腳本編輯器尚未完成。
+目前專案仍在早期開發階段，已完成視窗搜尋、Client Area 畫面自動更新、PNG 儲存，以及滑鼠位置的 Pixel／Normalized Coordinate 顯示。滑鼠輸入、腳本執行、圖片比對與腳本編輯器尚未完成。
 
 ## 系統需求
 
@@ -66,10 +66,12 @@ Core 是 Class Library，不能直接啟動。
 使用方式：
 
 1. 啟動 `GameAutomation.Capture`。
-2. 從「遊戲視窗」下拉清單選擇目標視窗。
+2. 按「滑鼠選取視窗」，移到目標視窗並按左鍵確認；也可以從下拉清單選擇。
 3. 如果目標視窗未出現，按「重新整理」。
 4. 按「擷取畫面」。
-5. 將滑鼠移到 Screenshot 上，底部會顯示 Pixel 與 Normalized 座標。
+5. 保持「自動更新」勾選即可持續更新 Screenshot。
+6. 將滑鼠移到 Screenshot 上，底部會顯示 Pixel 與 Normalized 座標。
+7. 按「儲存 PNG」將目前畫面保存到 `Templates` 或指定位置。
 
 Normalized 座標不受圖片在 WPF 中的顯示尺寸或留白影響。例如：
 
